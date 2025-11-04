@@ -134,7 +134,7 @@
         </div>
       </div>
 
-      <!-- Section panier -->
+      <!-- Section panier avec prix modifiables -->
       <div class="cart-section">
         <h3>🛒 Panier en Cours</h3>
         
@@ -151,8 +151,29 @@
           >
             <div class="item-info">
               <h4>{{ item.productName }}</h4>
-              <p class="item-price">{{ formatPrice(item.price) }} × {{ item.quantity }}</p>
+              <div class="price-controls">
+                <div class="price-input-group">
+                  <label>Prix unitaire:</label>
+                  <input 
+                    v-model.number="item.salePrice"
+                    type="number"
+                    min="0"
+                    step="100"
+                    @change="updateItemPrice(index)"
+                    class="price-input"
+                    :class="{ 'price-modified': item.salePrice !== item.originalPrice }"
+                  >
+                  <span class="currency">FCFA</span>
+                </div>
+                <div v-if="item.salePrice !== item.originalPrice" class="price-comparison">
+                  <span class="original-price">{{ formatPrice(item.originalPrice) }}</span>
+                  <span class="price-difference" :class="getPriceDifferenceClass(item)">
+                    {{ getPriceDifference(item) }}
+                  </span>
+                </div>
+              </div>
             </div>
+            
             <div class="item-controls">
               <button 
                 @click.stop="decreaseQuantity(index)"
@@ -176,22 +197,33 @@
                 🗑️
               </button>
             </div>
+            
             <div class="item-total">
-              {{ formatPrice(item.price * item.quantity) }}
+              <div class="total-amount">{{ formatPrice(item.salePrice * item.quantity) }}</div>
+              <div class="unit-price">{{ formatPrice(item.salePrice) }} × {{ item.quantity }}</div>
             </div>
           </div>
 
+          <!-- Résumé du panier -->
           <div class="cart-summary">
             <div class="summary-row">
               <span>Sous-total:</span>
               <span>{{ formatPrice(subtotal) }}</span>
             </div>
+            
+            <!-- Afficher la remise totale si applicable -->
+            <div v-if="totalDiscount > 0" class="summary-row discount">
+              <span>Remise totale:</span>
+              <span class="discount-amount">-{{ formatPrice(totalDiscount) }}</span>
+            </div>
+            
             <div class="summary-row total">
               <strong>Total:</strong>
               <strong>{{ formatPrice(totalAmount) }}</strong>
             </div>
           </div>
 
+          <!-- Actions de vente -->
           <div class="sale-actions">
             <div class="form-group">
               <label>Méthode de paiement:</label>
@@ -231,7 +263,17 @@ import { ref, computed, onMounted } from 'vue';
 import { useAppStore } from '../stores/app';
 import { useAuthStore } from '../stores/auth';
 import { formatPrice } from '../utils/format';
-import type { SaleItem, Product } from '../types';
+import type { Product } from '../types';
+
+// Définir l'interface pour les items du panier avec prix modifiable
+interface CartItem {
+  productId: string;
+  productName: string;
+  quantity: number;
+  originalPrice: number; // Prix original du produit
+  salePrice: number;     // Prix de vente (modifiable)
+  total: number;
+}
 
 const appStore = useAppStore();
 const authStore = useAuthStore();
@@ -241,7 +283,7 @@ const searchQuery = ref('');
 const selectedCategory = ref('');
 const paymentMethod = ref<'cash' | 'card' | 'mobile'>('cash');
 const customerName = ref('');
-const cart = ref<SaleItem[]>([]);
+const cart = ref<CartItem[]>([]);
 const viewMode = ref<'grid' | 'list'>('grid');
 
 // Computed properties
@@ -271,10 +313,19 @@ const filteredProducts = computed(() => {
 const categories = computed(() => appStore.categories);
 
 const subtotal = computed(() =>
-  cart.value.reduce((sum, item) => sum + (item.price * item.quantity), 0)
+  cart.value.reduce((sum, item) => sum + (item.salePrice * item.quantity), 0)
 );
 
 const totalAmount = computed(() => subtotal.value);
+
+const totalDiscount = computed(() =>
+  cart.value.reduce((sum, item) => {
+    if (item.salePrice < item.originalPrice) {
+      return sum + ((item.originalPrice - item.salePrice) * item.quantity);
+    }
+    return sum;
+  }, 0)
+);
 
 // Méthodes
 const addToCart = (product: Product) => {
@@ -285,14 +336,15 @@ const addToCart = (product: Product) => {
   if (existingItem) {
     if (existingItem.quantity < product.quantity) {
       existingItem.quantity++;
-      existingItem.total = existingItem.price * existingItem.quantity;
+      updateItemTotal(existingItem);
     }
   } else {
     cart.value.push({
       productId: product.id,
       productName: product.name,
       quantity: 1,
-      price: product.price,
+      originalPrice: product.price, // Prix original
+      salePrice: product.price,     // Prix de vente (modifiable)
       total: product.price
     });
   }
@@ -304,7 +356,7 @@ const increaseQuantity = (index: number) => {
   
   if (product && item.quantity < product.quantity) {
     item.quantity++;
-    item.total = item.price * item.quantity;
+    updateItemTotal(item);
   }
 };
 
@@ -312,7 +364,7 @@ const decreaseQuantity = (index: number) => {
   const item = cart.value[index];
   if (item.quantity > 1) {
     item.quantity--;
-    item.total = item.price * item.quantity;
+    updateItemTotal(item);
   }
 };
 
@@ -320,9 +372,48 @@ const removeFromCart = (index: number) => {
   cart.value.splice(index, 1);
 };
 
+const updateItemPrice = (index: number) => {
+  const item = cart.value[index];
+  
+  // Validation du prix
+  if (item.salePrice < 0) {
+    item.salePrice = 0;
+  }
+  
+  // Si le prix est vide, remettre le prix original
+  if (!item.salePrice && item.salePrice !== 0) {
+    item.salePrice = item.originalPrice;
+  }
+  
+  updateItemTotal(item);
+};
+
+const updateItemTotal = (item: CartItem) => {
+  item.total = item.salePrice * item.quantity;
+};
+
 const getMaxQuantity = (productId: string) => {
   const product = appStore.products.find(p => p.id === productId);
   return product ? product.quantity : 0;
+};
+
+const getPriceDifference = (item: CartItem) => {
+  const difference = item.salePrice - item.originalPrice;
+  const percentage = ((difference / item.originalPrice) * 100).toFixed(1);
+  
+  if (difference > 0) {
+    return `+${formatPrice(difference)} (+${percentage}%)`;
+  } else if (difference < 0) {
+    return `${formatPrice(difference)} (${percentage}%)`;
+  }
+  return '';
+};
+
+const getPriceDifferenceClass = (item: CartItem) => {
+  const difference = item.salePrice - item.originalPrice;
+  if (difference > 0) return 'price-increase';
+  if (difference < 0) return 'price-decrease';
+  return '';
 };
 
 const processSale = () => {
@@ -337,9 +428,23 @@ const processSale = () => {
     }
   }
 
+  // Vérifier les prix négatifs
+  for (const item of cart.value) {
+    if (item.salePrice < 0) {
+      alert(`❌ Prix invalide pour ${item.productName}`);
+      return;
+    }
+  }
+
   // Enregistrer la vente
   appStore.addSale({
-    items: [...cart.value],
+    items: cart.value.map(item => ({
+      productId: item.productId,
+      productName: item.productName,
+      quantity: item.quantity,
+      price: item.salePrice, // Utiliser le prix modifié
+      total: item.total
+    })),
     totalAmount: totalAmount.value,
     paymentMethod: paymentMethod.value,
     customerName: customerName.value,
@@ -429,7 +534,7 @@ onMounted(() => {
   background: rgba(255,255,255,0.5);
 }
 
-/* Styles existants pour la recherche et filtres */
+/* Recherche et filtres */
 .search-filter {
   display: grid;
   grid-template-columns: 2fr 1fr;
@@ -444,7 +549,7 @@ onMounted(() => {
   font-size: 14px;
 }
 
-/* Styles pour la vue grille (existants) */
+/* Styles pour la vue grille */
 .products-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
@@ -585,10 +690,6 @@ onMounted(() => {
   opacity: 0.6;
 }
 
-.products-table tr.out-of-stock:hover {
-  background: #fff3cd;
-}
-
 .product-cell {
   min-width: 200px;
 }
@@ -686,7 +787,7 @@ onMounted(() => {
   color: #7f8c8d;
 }
 
-/* Styles pour le panier (inchangés) */
+/* Styles pour le panier */
 .empty-cart {
   text-align: center;
   padding: 40px 20px;
@@ -715,14 +816,77 @@ onMounted(() => {
 }
 
 .item-info h4 {
-  margin: 0 0 5px 0;
+  margin: 0 0 8px 0;
   font-size: 0.9em;
 }
 
-.item-price {
-  margin: 0;
-  color: #7f8c8d;
+/* Nouveaux styles pour la gestion des prix */
+.price-controls {
+  margin-top: 8px;
+}
+
+.price-input-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 5px;
+}
+
+.price-input-group label {
   font-size: 0.8em;
+  color: #7f8c8d;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.price-input {
+  width: 100px;
+  padding: 6px 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.9em;
+  text-align: right;
+}
+
+.price-input.price-modified {
+  border-color: #3498db;
+  background-color: #e3f2fd;
+  font-weight: bold;
+}
+
+.currency {
+  font-size: 0.8em;
+  color: #7f8c8d;
+  white-space: nowrap;
+}
+
+.price-comparison {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.75em;
+}
+
+.original-price {
+  text-decoration: line-through;
+  color: #7f8c8d;
+}
+
+.price-difference {
+  font-weight: 500;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: 0.7em;
+}
+
+.price-increase {
+  background: #e8f5e8;
+  color: #2e7d32;
+}
+
+.price-decrease {
+  background: #ffebee;
+  color: #c62828;
 }
 
 .item-controls {
@@ -766,8 +930,19 @@ onMounted(() => {
 }
 
 .item-total {
+  text-align: right;
+}
+
+.total-amount {
   font-weight: bold;
   color: #2c3e50;
+  font-size: 1em;
+}
+
+.unit-price {
+  font-size: 0.8em;
+  color: #7f8c8d;
+  margin-top: 2px;
 }
 
 .cart-summary {
@@ -787,6 +962,15 @@ onMounted(() => {
   border-top: 1px solid #bdc3c7;
   padding-top: 8px;
   font-size: 1.1em;
+}
+
+.cart-summary .discount {
+  color: #e74c3c;
+}
+
+.discount-amount {
+  color: #e74c3c;
+  font-weight: bold;
 }
 
 .sale-actions {
@@ -833,6 +1017,7 @@ label {
   cursor: not-allowed;
 }
 
+/* Responsive */
 @media (max-width: 1024px) {
   .vente-content {
     grid-template-columns: 1fr;
@@ -841,15 +1026,6 @@ label {
   
   .products-grid {
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  }
-  
-  .products-table {
-    font-size: 0.8em;
-  }
-  
-  .products-table th,
-  .products-table td {
-    padding: 8px 10px;
   }
 }
 
@@ -866,6 +1042,39 @@ label {
   
   .search-filter {
     grid-template-columns: 1fr;
+  }
+  
+  .products-table {
+    font-size: 0.8em;
+  }
+  
+  .products-table th,
+  .products-table td {
+    padding: 8px 10px;
+  }
+  
+  .price-input-group {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  
+  .price-input {
+    width: 100%;
+  }
+  
+  .cart-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .item-controls {
+    align-self: center;
+  }
+  
+  .item-total {
+    align-self: flex-end;
   }
 }
 </style>
