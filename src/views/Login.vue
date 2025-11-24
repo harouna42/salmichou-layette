@@ -26,9 +26,9 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { useAuthStore } from '../stores/auth';
+import { useUsersStore } from '../stores/users';
 
-const authStore = useAuthStore();
+const authStore = useUsersStore();
 const router = useRouter();
 
 const username = ref('');

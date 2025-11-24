@@ -260,7 +260,7 @@ const appStore = useAppStore();
 const showForm = ref(false);
 const isEditing = ref(false);
 const editingProduct = ref<Product | null>(null);
-const viewMode = ref<'grid' | 'list'>('grid'); // Nouvel état pour le mode d'affichage
+const viewMode = ref<'grid' | 'list'>('list'); // Nouvel état pour le mode d'affichage
 const searchQuery = ref('');
 const selectedCategory = ref('');
 

@@ -82,10 +82,8 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { useAuthStore } from '../stores/auth';
 import { useUsersStore } from '../stores/users';
 
-const authStore = useAuthStore();
 const usersStore = useUsersStore();
 const router = useRouter();
 
@@ -93,11 +91,11 @@ const router = useRouter();
 const currentUser = computed(() => usersStore.currentUser);
 
 const hasPermission = (permission: string) => {
-  return authStore.hasPermission(permission);
+  return usersStore.hasPermission(permission);
 };
 
 const handleLogout = () => {
-  authStore.logout();
+  usersStore.logout();
   // Rediriger vers la page de login après déconnexion
   router.push('/login');
 };

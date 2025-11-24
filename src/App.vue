@@ -9,12 +9,10 @@
 
 <script setup lang="ts">
 import { onMounted } from 'vue';
-import { useAuthStore } from './stores/auth';
 import { useUsersStore } from './stores/users';
 import { useAppStore } from './stores/app';
 import NavigationVerticale from './components/NavigationVerticale.vue';
 
-const authStore = useAuthStore();
 const usersStore = useUsersStore();
 const appStore = useAppStore();
 
@@ -22,7 +20,7 @@ const isAuthenticated = () => !!usersStore.currentUser;
 
 onMounted(() => {
   usersStore.initializeUsers();
-  authStore.initialize();
+  //usersStore.initialize();
   appStore.initializeData();
 });
 </script>

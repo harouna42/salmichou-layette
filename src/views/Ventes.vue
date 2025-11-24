@@ -261,7 +261,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useAppStore } from '../stores/app';
-import { useAuthStore } from '../stores/auth';
+import { useUsersStore } from '../stores/users';
 import { formatPrice } from '../utils/format';
 import type { Product } from '../types';
 
@@ -276,7 +276,7 @@ interface CartItem {
 }
 
 const appStore = useAppStore();
-const authStore = useAuthStore();
+const authStore = useUsersStore();
 
 // États réactifs
 const searchQuery = ref('');
@@ -284,7 +284,7 @@ const selectedCategory = ref('');
 const paymentMethod = ref<'cash' | 'card' | 'mobile'>('cash');
 const customerName = ref('');
 const cart = ref<CartItem[]>([]);
-const viewMode = ref<'grid' | 'list'>('grid');
+const viewMode = ref<'grid' | 'list'>('list');
 
 // Computed properties
 const availableProducts = computed(() => 

@@ -1,6 +1,6 @@
 <template>
   <div class="backup-manager">
-    <h3>💾 Gestion des Sauvegardes</h3>
+    <h3>💾 Gestion des Exportations</h3>
     
     <div class="backup-info">
       <div class="info-item">
@@ -13,89 +13,126 @@
       <div class="info-item">
         <strong>Produits en stock:</strong> {{ productsCount }}
       </div>
-      <div class="info-item" v-if="autoSaveEnabled">
-        <strong>Prochaine sauvegarde auto:</strong> {{ timeUntilNextSave }}s
+      <div class="info-item">
+        <strong>Catégories:</strong> {{ categoriesCount }}
       </div>
     </div>
 
-    <div class="backup-actions">
-      <button @click="createBackup" class="btn-primary" title="Télécharger un fichier de sauvegarde">
-        💾 Sauvegarder maintenant
-      </button>
+    <!-- Exportations séparées -->
+    <div class="export-section">
+      <h4>📤 Exporter par type</h4>
       
-      <button @click="triggerImport" class="btn-secondary" title="Importer un fichier de sauvegarde">
-        📂 Importer une sauvegarde
-      </button>
+      <div class="export-grid">
+        <div class="export-card">
+          <div class="export-icon">📦</div>
+          <div class="export-info">
+            <h5>Produits</h5>
+            <p>{{ productsCount }} produits</p>
+          </div>
+          <button 
+            @click="exportProducts" 
+            class="btn-export"
+            :disabled="productsCount === 0"
+          >
+            Exporter
+          </button>
+        </div>
 
+        <div class="export-card">
+          <div class="export-icon">📁</div>
+          <div class="export-info">
+            <h5>Catégories</h5>
+            <p>{{ categoriesCount }} catégories</p>
+          </div>
+          <button 
+            @click="exportCategories" 
+            class="btn-export"
+            :disabled="categoriesCount === 0"
+          >
+            Exporter
+          </button>
+        </div>
+
+        <div class="export-card">
+          <div class="export-icon">🛒</div>
+          <div class="export-info">
+            <h5>Ventes</h5>
+            <p>{{ salesCount }} ventes</p>
+          </div>
+          <button 
+            @click="exportSales" 
+            class="btn-export"
+            :disabled="salesCount === 0"
+          >
+            Exporter
+          </button>
+        </div>
+
+        <div class="export-card" v-if="hasPermission('manage_users')">
+          <div class="export-icon">👥</div>
+          <div class="export-info">
+            <h5>Utilisateurs</h5>
+            <p>{{ usersCount }} utilisateurs</p>
+          </div>
+          <button 
+            @click="exportUsers" 
+            class="btn-export"
+            :disabled="usersCount === 0"
+          >
+            Exporter
+          </button>
+        </div>
+      </div>
+
+      <!-- Export complet -->
+      <div class="full-export">
+        <button 
+          @click="exportAll" 
+          class="btn-primary full-export-btn"
+          :disabled="totalDataCount === 0"
+        >
+          💾 Exporter toutes les données ({{ totalDataCount }} éléments)
+        </button>
+      </div>
+    </div>
+
+    <!-- Import -->
+    <div class="import-section">
+      <h4>📤 Importer des données</h4>
+      
+      <div class="import-options">
+        <select v-model="importType" class="import-select">
+          <option value="auto">Détection automatique</option>
+          <option value="products">Produits</option>
+          <option value="categories">Catégories</option>
+          <option value="sales">Ventes</option>
+          <option value="users">Utilisateurs</option>
+          <option value="full">Toutes les données</option>
+        </select>
+
+        <button @click="triggerImport" class="btn-secondary">
+          📂 Choisir le fichier à importer
+        </button>
+      </div>
+
+      <div class="import-info">
+        <p>Formats supportés : JSON exporté depuis Salmichou Layette</p>
+      </div>
+    </div>
+
+    <!-- Réinitialisation (Admin seulement) -->
+    <div class="danger-section" v-if="hasPermission('manage_users')">
+      <h4>🗑️ Zone de réinitialisation</h4>
       <button 
-        v-if="hasPermission('manage_users')"
         @click="resetData" 
         class="btn-danger" 
         title="Réinitialiser toutes les données"
       >
-        🗑️ Réinitialiser
+        🔥 Réinitialiser toutes les données
       </button>
-
-      <button @click="showAutoSave = !showAutoSave" class="btn-info">
-        ⚙️ {{ showAutoSave ? 'Masquer' : 'Afficher' }} options
-      </button>
-    </div>
-
-    <!-- Options de sauvegarde automatique -->
-    <div v-if="showAutoSave" class="auto-save-options">
-      <h4>🔄 Sauvegarde Automatique</h4>
-      
-      <div class="option-group">
-        <label class="toggle-label">
-          <input 
-            type="checkbox" 
-            v-model="autoSaveEnabled"
-            @change="toggleAutoSave"
-          >
-          <span class="toggle-slider"></span>
-          <span class="toggle-text">Sauvegarde automatique activée</span>
-        </label>
-        <div class="option-description">
-          Une sauvegarde sera créée automatiquement toutes les 5 minutes
-        </div>
-      </div>
-
-      <div class="option-group" v-if="autoSaveEnabled">
-        <label class="toggle-label">
-          <input 
-            type="checkbox" 
-            v-model="backupOnExit"
-          >
-          <span class="toggle-slider"></span>
-          <span class="toggle-text">Alerte à la fermeture</span>
-        </label>
-        <div class="option-description">
-          Avertir si des données non sauvegardées lors de la fermeture
-        </div>
-      </div>
-
-      <div class="option-group" v-if="autoSaveEnabled">
-        <label class="toggle-label">
-          <input 
-            type="checkbox" 
-            v-model="silentAutoSave"
-          >
-          <span class="toggle-slider"></span>
-          <span class="toggle-text">Sauvegarde silencieuse</span>
-        </label>
-        <div class="option-description">
-          Ne pas montrer la notification de sauvegarde automatique
-        </div>
-      </div>
-
-      <div class="backup-stats" v-if="autoSaveEnabled">
-        <div class="stat">
-          <strong>Sauvegardes automatiques:</strong> {{ autoSaveCount }}
-        </div>
-        <div class="stat">
-          <strong>Prochaine sauvegarde:</strong> {{ timeUntilNextSave }} secondes
-        </div>
-      </div>
+      <p class="warning-text">
+        ⚠️ Attention : Cette action supprime définitivement toutes les données et ne peut pas être annulée.
+      </p>
     </div>
 
     <input 
@@ -110,50 +147,24 @@
     <div v-if="message" :class="['message', messageType]">
       {{ message }}
     </div>
-
-    <!-- Notification de sauvegarde automatique -->
-    <div v-if="showAutoSaveNotification" class="auto-save-notification">
-      🔄 Sauvegarde automatique effectuée à {{ formatTime(new Date()) }}
-    </div>
-
-    <!-- Aide -->
-    <div class="backup-help">
-      <h4>📋 Instructions de sauvegarde</h4>
-      <ul>
-        <li>💾 <strong>Sauvegarder</strong> : Télécharge un fichier JSON avec toutes vos données</li>
-        <li>📂 <strong>Importer</strong> : Remplace les données actuelles par celles d'un fichier de sauvegarde</li>
-        <li>🔄 <strong>Sauvegarde auto</strong> : Se déclenche automatiquement toutes les 5 minutes</li>
-        <li>🛡️ <strong>Conseil</strong> : Sauvegardez régulièrement sur une clé USB ou cloud</li>
-        <li>⚠️ <strong>Attention</strong> : Sans sauvegarde, les données peuvent être perdues si le cache est vidé</li>
-      </ul>
-    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { fileStorage } from '../storage/fileStorage';
+import { ExportManager } from '../utils/exportManager';
 import { useAppStore } from '../stores/app';
-import { useAuthStore } from '../stores/auth';
+import { useUsersStore } from '../stores/users';
 
 const appStore = useAppStore();
-const authStore = useAuthStore();
+const usersStore = useUsersStore();
 const fileInput = ref<HTMLInputElement>();
 
 // États
 const message = ref('');
 const messageType = ref<'success' | 'error'>('success');
-const showAutoSave = ref(false);
-const autoSaveEnabled = ref(false);
-const backupOnExit = ref(true);
-const silentAutoSave = ref(false);
-const showAutoSaveNotification = ref(false);
-const timeUntilNextSave = ref(300); // 5 minutes en secondes
-const autoSaveCount = ref(0);
-
-// Timers
-let autoSaveInterval: number | null = null;
-let countdownInterval: number | null = null;
+const importType = ref('auto');
 
 // Computed
 const lastSave = computed(() => {
@@ -163,24 +174,73 @@ const lastSave = computed(() => {
 
 const salesCount = computed(() => appStore.sales.length);
 const productsCount = computed(() => appStore.products.length);
+const categoriesCount = computed(() => appStore.categories.length);
+const usersCount = computed(() => usersStore.users.length);
+const totalDataCount = computed(() => salesCount.value + productsCount.value + categoriesCount.value + usersCount.value);
 
 const hasPermission = (permission: string) => {
-  return authStore.hasPermission(permission);
+  return usersStore.hasPermission(permission);
 };
 
-// Méthodes
-const createBackup = async () => {
-  try {
-    const data = fileStorage.getCurrentData();
-    if (data) {
-      fileStorage.downloadBackup(data);
-      showMessage('✅ Sauvegarde créée avec succès !', 'success');
-    }
-  } catch (error) {
-    showMessage('❌ Erreur lors de la sauvegarde', 'error');
+// Méthodes d'export
+const exportProducts = () => {
+  const result = ExportManager.exportProducts(appStore.products);
+  if (result.success && result.data) {
+    ExportManager.downloadFile(result.data, ExportManager.generateFilename('produits'));
+    showMessage('✅ Produits exportés avec succès !', 'success');
+  } else {
+    showMessage('❌ ' + result.error, 'error');
   }
 };
 
+const exportCategories = () => {
+  const result = ExportManager.exportCategories(appStore.categories);
+  if (result.success && result.data) {
+    ExportManager.downloadFile(result.data, ExportManager.generateFilename('categories'));
+    showMessage('✅ Catégories exportées avec succès !', 'success');
+  } else {
+    showMessage('❌ ' + result.error, 'error');
+  }
+};
+
+const exportSales = () => {
+  const result = ExportManager.exportSales(appStore.sales);
+  if (result.success && result.data) {
+    ExportManager.downloadFile(result.data, ExportManager.generateFilename('ventes'));
+    showMessage('✅ Ventes exportées avec succès !', 'success');
+  } else {
+    showMessage('❌ ' + result.error, 'error');
+  }
+};
+
+const exportUsers = () => {
+  const result = ExportManager.exportUsers(usersStore.users);
+  if (result.success && result.data) {
+    ExportManager.downloadFile(result.data, ExportManager.generateFilename('utilisateurs'));
+    showMessage('✅ Utilisateurs exportés avec succès !', 'success');
+  } else {
+    showMessage('❌ ' + result.error, 'error');
+  }
+};
+
+const exportAll = () => {
+  const data = {
+    products: appStore.products,
+    categories: appStore.categories,
+    sales: appStore.sales,
+    users: usersStore.users
+  };
+  
+  const result = ExportManager.exportAll(data);
+  if (result.success && result.data) {
+    ExportManager.downloadFile(result.data, ExportManager.generateFilename('sauvegarde_complete'));
+    showMessage('✅ Toutes les données exportées avec succès !', 'success');
+  } else {
+    showMessage('❌ ' + result.error, 'error');
+  }
+};
+
+// Méthodes d'import
 const triggerImport = () => {
   fileInput.value?.click();
 };
@@ -191,20 +251,23 @@ const handleFileImport = async (event: Event) => {
   
   if (!file) return;
 
-  if (confirm('⚠️ ATTENTION : Cette action va remplacer toutes vos données actuelles. Êtes-vous sûr ?')) {
-    const result = await fileStorage.importFromFile(file);
+  try {
+    const text = await file.text();
+    const data = JSON.parse(text);
     
-    if (result.success) {
-      await appStore.initializeData();
-      showMessage('✅ ' + result.message, 'success');
+    if (confirm('⚠️ Cette action va modifier vos données. Êtes-vous sûr ?')) {
+      const result = await fileStorage.importFromFile(file, importType.value);
       
-      // Redémarrer la sauvegarde auto si import réussi
-      if (autoSaveEnabled.value) {
-        restartAutoSave();
+      if (result.success) {
+        await appStore.initializeData();
+        usersStore.initializeUsers();
+        showMessage('✅ ' + result.message, 'success');
+      } else {
+        showMessage('❌ ' + result.message, 'error');
       }
-    } else {
-      showMessage('❌ ' + result.message, 'error');
     }
+  } catch (error) {
+    showMessage('❌ Fichier invalide ou corrompu', 'error');
   }
   
   target.value = '';
@@ -214,82 +277,6 @@ const resetData = async () => {
   if (confirm('🚨 CETTE ACTION EST IRREVERSIBLE ! Toutes les données seront perdues. Confirmer la réinitialisation ?')) {
     await appStore.resetData();
     showMessage('✅ Données réinitialisées', 'success');
-    autoSaveCount.value = 0;
-  }
-};
-
-const toggleAutoSave = () => {
-  if (autoSaveEnabled.value) {
-    startAutoSave();
-    showMessage('✅ Sauvegarde automatique activée', 'success');
-  } else {
-    stopAutoSave();
-    showMessage('🔴 Sauvegarde automatique désactivée', 'success');
-  }
-};
-
-const startAutoSave = () => {
-  const interval = 5 * 60 * 1000; // 5 minutes
-  
-  // Sauvegarde immédiate au démarrage
-  performAutoSave();
-  
-  // Configurer l'intervalle régulier
-  autoSaveInterval = window.setInterval(() => {
-    performAutoSave();
-  }, interval);
-
-  // Démarrer le compte à rebours
-  startCountdown();
-};
-
-const stopAutoSave = () => {
-  if (autoSaveInterval) {
-    clearInterval(autoSaveInterval);
-    autoSaveInterval = null;
-  }
-  if (countdownInterval) {
-    clearInterval(countdownInterval);
-    countdownInterval = null;
-  }
-  timeUntilNextSave.value = 300;
-};
-
-const restartAutoSave = () => {
-  stopAutoSave();
-  if (autoSaveEnabled.value) {
-    startAutoSave();
-  }
-};
-
-const startCountdown = () => {
-  countdownInterval = window.setInterval(() => {
-    if (timeUntilNextSave.value > 1) {
-      timeUntilNextSave.value--;
-    } else {
-      timeUntilNextSave.value = 300; // Reset à 5 minutes
-    }
-  }, 1000);
-};
-
-const performAutoSave = async () => {
-  try {
-    const data = fileStorage.getCurrentData();
-    if (data && (data.sales.length > 0 || data.products.length > 0)) {
-      fileStorage.downloadBackup(data);
-      autoSaveCount.value++;
-      
-      if (!silentAutoSave.value) {
-        showAutoSaveNotification.value = true;
-        setTimeout(() => {
-          showAutoSaveNotification.value = false;
-        }, 3000);
-      }
-      
-      console.log(`Sauvegarde automatique #${autoSaveCount.value} effectuée`);
-    }
-  } catch (error) {
-    console.error('Erreur sauvegarde automatique:', error);
   }
 };
 
@@ -305,68 +292,10 @@ const formatDate = (date: Date) => {
   return date.toLocaleString('fr-FR');
 };
 
-const formatTime = (date: Date) => {
-  return date.toLocaleTimeString('fr-FR', { 
-    hour: '2-digit', 
-    minute: '2-digit' 
-  });
-};
-
-// Gestion de la fermeture de la page
-const beforeUnloadHandler = (event: BeforeUnloadEvent) => {
-  if (backupOnExit.value && autoSaveEnabled.value) {
-    const data = fileStorage.getCurrentData();
-    if (data && data.sales.length > 0) {
-      // Vérifier si une vente a été faite récemment (dans les 2 dernières minutes)
-      const lastSale = data.sales[0];
-      if (lastSale && (Date.now() - new Date(lastSale.createdAt).getTime()) < 2 * 60 * 1000) {
-        event.preventDefault();
-        event.returnValue = 'Une vente récente a été effectuée. Voulez-vous vraiment quitter sans sauvegarde manuelle ?';
-        return 'Une vente récente a été effectuée. Voulez-vous vraiment quirer sans sauvegarde manuelle ?';
-      }
-    }
-  }
-};
-
 // Initialisation
 onMounted(() => {
-  // Charger les préférences depuis le localStorage
-  const preferences = localStorage.getItem('backup-preferences');
-  if (preferences) {
-    const prefs = JSON.parse(preferences);
-    autoSaveEnabled.value = prefs.autoSaveEnabled || false;
-    backupOnExit.value = prefs.backupOnExit !== false; // true par défaut
-    silentAutoSave.value = prefs.silentAutoSave || false;
-  }
-
-  // Démarrer la sauvegarde auto si activée
-  if (autoSaveEnabled.value) {
-    startAutoSave();
-  }
-
-  // Écouter la fermeture de page
-  window.addEventListener('beforeunload', beforeUnloadHandler);
-});
-
-// Sauvegarde des préférences
-const savePreferences = () => {
-  const preferences = {
-    autoSaveEnabled: autoSaveEnabled.value,
-    backupOnExit: backupOnExit.value,
-    silentAutoSave: silentAutoSave.value
-  };
-  localStorage.setItem('backup-preferences', JSON.stringify(preferences));
-};
-
-// Watch les préférences pour les sauvegarder
-import { watch } from 'vue';
-watch([autoSaveEnabled, backupOnExit, silentAutoSave], () => {
-  savePreferences();
-});
-
-onUnmounted(() => {
-  stopAutoSave();
-  window.removeEventListener('beforeunload', beforeUnloadHandler);
+  appStore.initializeData();
+  usersStore.initializeUsers();
 });
 </script>
 
@@ -383,142 +312,182 @@ onUnmounted(() => {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 15px;
-  margin-bottom: 20px;
+  margin-bottom: 30px;
   padding: 15px;
   background: #f8f9fa;
   border-radius: 5px;
 }
 
-.info-item {
-  font-size: 0.9em;
+/* Section Export */
+.export-section {
+  margin-bottom: 30px;
 }
 
-.backup-actions {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
-}
-
-.auto-save-options {
-  background: #e3f2fd;
-  padding: 20px;
-  border-radius: 8px;
-  margin-bottom: 20px;
-  border-left: 4px solid #2196f3;
-}
-
-.auto-save-options h4 {
-  margin: 0 0 15px 0;
-  color: #1976d2;
-}
-
-.option-group {
+.export-section h4 {
+  color: #2c3e50;
   margin-bottom: 15px;
 }
 
-.toggle-label {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  cursor: pointer;
-  font-weight: 500;
+.export-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 15px;
+  margin-bottom: 20px;
 }
 
-.toggle-slider {
-  position: relative;
-  width: 50px;
-  height: 24px;
-  background: #ccc;
-  border-radius: 24px;
+.export-card {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.export-icon {
+  font-size: 1.5em;
+}
+
+.export-info {
+  flex: 1;
+}
+
+.export-info h5 {
+  margin: 0 0 5px 0;
+  color: #2c3e50;
+}
+
+.export-info p {
+  margin: 0;
+  color: #6c757d;
+  font-size: 0.9em;
+}
+
+.btn-export {
+  background: #17a2b8;
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.9em;
+}
+
+.btn-export:hover:not(:disabled) {
+  background: #138496;
+}
+
+.btn-export:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+}
+
+.full-export {
+  text-align: center;
+  padding: 20px;
+  background: #e8f5e8;
+  border-radius: 8px;
+}
+
+.full-export-btn {
+  padding: 12px 24px;
+  font-size: 1.1em;
+}
+
+/* Section Import */
+.import-section {
+  margin-bottom: 30px;
+  padding: 20px;
+  background: #e3f2fd;
+  border-radius: 8px;
+}
+
+.import-section h4 {
+  color: #1976d2;
+  margin-bottom: 15px;
+}
+
+.import-options {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+}
+
+.import-select {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  min-width: 200px;
+}
+
+.import-info {
+  font-size: 0.9em;
+  color: #666;
+}
+
+/* Section Danger */
+.danger-section {
+  padding: 20px;
+  background: #f8d7da;
+  border-radius: 8px;
+  border-left: 4px solid #dc3545;
+}
+
+.danger-section h4 {
+  color: #721c24;
+  margin-bottom: 15px;
+}
+
+.warning-text {
+  color: #856404;
+  font-size: 0.9em;
+  margin-top: 10px;
+}
+
+/* Boutons */
+.btn-primary {
+  background: #3498db;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 5px;
+  cursor: pointer;
   transition: background 0.3s;
 }
 
-.toggle-slider::before {
-  content: '';
-  position: absolute;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: white;
-  top: 2px;
-  left: 2px;
-  transition: transform 0.3s;
+.btn-primary:hover:not(:disabled) {
+  background: #2980b9;
 }
 
-input[type="checkbox"] {
-  display: none;
-}
-
-input[type="checkbox"]:checked + .toggle-slider {
-  background: #4caf50;
-}
-
-input[type="checkbox"]:checked + .toggle-slider::before {
-  transform: translateX(26px);
-}
-
-.option-description {
-  font-size: 0.85em;
-  color: #666;
-  margin-top: 5px;
-  margin-left: 62px;
-}
-
-.backup-stats {
-  background: rgba(255,255,255,0.7);
-  padding: 15px;
-  border-radius: 5px;
-  margin-top: 15px;
-}
-
-.stat {
-  margin-bottom: 8px;
-  font-size: 0.9em;
-}
-
-.auto-save-notification {
-  background: #e8f5e8;
-  color: #2e7d32;
+.btn-secondary {
+  background: #6c757d;
+  color: white;
+  border: none;
   padding: 10px 15px;
   border-radius: 5px;
-  margin: 10px 0;
-  text-align: center;
-  animation: slideIn 0.3s ease-out;
+  cursor: pointer;
+  transition: background 0.3s;
 }
 
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.btn-secondary:hover {
+  background: #5a6268;
 }
 
-.backup-help {
-  background: #fff3cd;
-  padding: 15px;
+.btn-danger {
+  background: #dc3545;
+  color: white;
+  border: none;
+  padding: 10px 15px;
   border-radius: 5px;
-  margin-top: 20px;
-  border-left: 4px solid #ffc107;
+  cursor: pointer;
+  transition: background 0.3s;
 }
 
-.backup-help h4 {
-  margin: 0 0 10px 0;
-  color: #856404;
-}
-
-.backup-help ul {
-  margin: 0;
-  padding-left: 20px;
-}
-
-.backup-help li {
-  margin-bottom: 8px;
-  font-size: 0.9em;
+.btn-danger:hover {
+  background: #c82333;
 }
 
 .message {
@@ -540,74 +509,18 @@ input[type="checkbox"]:checked + .toggle-slider::before {
   border: 1px solid #f5c6cb;
 }
 
-.btn-primary {
-  background: #3498db;
-  color: white;
-  border: none;
-  padding: 10px 15px;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background 0.3s;
-}
-
-.btn-primary:hover {
-  background: #2980b9;
-}
-
-.btn-secondary {
-  background: #95a5a6;
-  color: white;
-  border: none;
-  padding: 10px 15px;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background 0.3s;
-}
-
-.btn-secondary:hover {
-  background: #7f8c8d;
-}
-
-.btn-danger {
-  background: #e74c3c;
-  color: white;
-  border: none;
-  padding: 10px 15px;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background 0.3s;
-}
-
-.btn-danger:hover {
-  background: #c0392b;
-}
-
-.btn-info {
-  background: #17a2b8;
-  color: white;
-  border: none;
-  padding: 10px 15px;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background 0.3s;
-}
-
-.btn-info:hover {
-  background: #138496;
-}
-
 @media (max-width: 768px) {
-  .backup-actions {
-    flex-direction: column;
-  }
-  
-  .backup-info {
+  .export-grid {
     grid-template-columns: 1fr;
   }
   
-  .option-description {
-    margin-left: 0;
-    margin-top: 8px;
+  .import-options {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .import-select {
+    min-width: auto;
   }
 }
 </style>

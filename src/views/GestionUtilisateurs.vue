@@ -220,11 +220,9 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, reactive } from 'vue';
 import { useUsersStore } from '../stores/users';
-import { useAuthStore } from '../stores/auth';
 import type { User } from '../types';
 
 const usersStore = useUsersStore();
-const authStore = useAuthStore();
 
 // États
 const showAddUser = ref(false);
@@ -249,7 +247,7 @@ const roles = computed(() => usersStore.roles);
 const currentUser = computed(() => usersStore.currentUser);
 
 const hasPermission = (permission: string) => {
-  return authStore.hasPermission(permission);
+  return usersStore.hasPermission(permission);
 };
 
 // Méthodes

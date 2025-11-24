@@ -2,8 +2,6 @@
   <div class="statistiques-container">
     <h1>Statistiques et Rapports</h1>
     
-    <BackupManager />
-
     <div class="stats-grid">
       <div class="stat-card">
         <div class="stat-icon">💰</div>
@@ -81,6 +79,10 @@
         </tbody>
       </table>
     </div>
+
+    <BackupManager />
+
+
   </div>
 </template>
 

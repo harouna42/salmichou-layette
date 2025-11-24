@@ -34,7 +34,8 @@ export const useAppStore = defineStore('app', () => {
     data.categories = categories.value;
     data.sales = sales.value;
     
-    await fileStorage.saveData(data);
+    fileStorage.saveDataSilently(data);
+    //await fileStorage.saveData(data);
   };
 
   // Gestion des produits
@@ -80,6 +81,22 @@ export const useAppStore = defineStore('app', () => {
     return newCategory;
   };
 
+  // Gestion des catégories
+const updateCategory = async (id: string, updates: Partial<Category>) => {
+  const index = categories.value.findIndex(c => c.id === id);
+  if (index !== -1) {
+    categories.value[index] = {
+      ...categories.value[index],
+      ...updates
+    };
+    await saveAllData();
+  }
+};
+
+const deleteCategory = async (id: string) => {
+  categories.value = categories.value.filter(c => c.id !== id);
+  await saveAllData();
+};
   // Gestion des ventes
   const addSale = async (saleData: Omit<Sale, 'id'>) => {
     const newSale: Sale = {
@@ -149,6 +166,8 @@ export const useAppStore = defineStore('app', () => {
     updateProduct,
     deleteProduct,
     addCategory,
+    updateCategory,
+    deleteCategory,
     addSale,
     getStatistics,
     resetData,

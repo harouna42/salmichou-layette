@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { jsonStorage } from '../storage/jsonStorage';
 import type { User, Role, UserPermission } from '../types';
 
@@ -29,7 +29,13 @@ export const useUsersStore = defineStore('users', () => {
     }
   ];
 
-  // Initialisation des données
+  // Computed pour l'authentification
+  const isAuthenticated = computed(() => !!currentUser.value);
+  const isAdmin = computed(() => currentUser.value?.role === 'admin');
+  const isManager = computed(() => currentUser.value?.role === 'manager');
+  const isEmployee = computed(() => currentUser.value?.role === 'employee');
+
+  // Initialisation
   const initializeUsers = () => {
     const data = jsonStorage.loadData();
     users.value = data.users.map((user: any) => ({
@@ -38,18 +44,10 @@ export const useUsersStore = defineStore('users', () => {
       updatedAt: new Date(user.updatedAt)
     }));
 
-    // Récupérer l'utilisateur connecté
     const storedUser = localStorage.getItem('currentUser');
     if (storedUser) {
       currentUser.value = JSON.parse(storedUser);
     }
-  };
-
-  // Sauvegarder les utilisateurs
-  const saveUsers = () => {
-    const data = jsonStorage.loadData();
-    data.users = users.value;
-    jsonStorage.saveData(data);
   };
 
   // Authentification
@@ -98,7 +96,6 @@ export const useUsersStore = defineStore('users', () => {
       
       saveUsers();
 
-      // Mettre à jour l'utilisateur courant si c'est lui
       if (currentUser.value?.id === id) {
         currentUser.value = users.value[index];
         localStorage.setItem('currentUser', JSON.stringify(users.value[index]));
@@ -141,18 +138,28 @@ export const useUsersStore = defineStore('users', () => {
     return roles.find(r => r.name === currentUser.value!.role);
   };
 
-  // Computed
-const activeUsers = () => users.value.filter(u => u.isActive);
-const inactiveUsers = () => users.value.filter(u => !u.isActive);
-const isAuthenticated = () => currentUser.value !== null;
+  // Sauvegarde
+  const saveUsers = () => {
+    const data = jsonStorage.loadData();
+    data.users = users.value;
+    jsonStorage.saveData(data);
+  };
 
   return {
+    // États
     users,
     currentUser,
     roles,
-    activeUsers,
-    inactiveUsers,
+    
+    // Computed
     isAuthenticated,
+    isAdmin,
+    isManager,
+    isEmployee,
+    activeUsers: computed(() => users.value.filter(u => u.isActive)),
+    inactiveUsers: computed(() => users.value.filter(u => !u.isActive)),
+    
+    // Méthodes
     initializeUsers,
     login,
     logout,
