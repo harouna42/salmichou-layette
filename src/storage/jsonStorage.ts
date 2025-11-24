@@ -1,3 +1,5 @@
+import { CryptoUtils } from '../utils/crypto';
+
 export interface StoredData {
   users: any[];
   products: any[];
@@ -12,23 +14,51 @@ export class JSONStorage {
   // Charger toutes les données
   loadData(): StoredData {
     try {
+      const defaultData = {
+        products: [],
+        categories: [],
+        sales: [],
+        users: [],
+        lastSave: new Date().toISOString()
+      };
+
       const stored = localStorage.getItem(this.storageKey);
-      if (stored) {
-        return JSON.parse(stored);
+      if (!stored) return defaultData;
+
+     const data = JSON.parse(stored);
+      
+      // ✅ DÉCHIFFRER les utilisateurs au chargement
+      if (data.users && Array.isArray(data.users)) {
+        data.users = data.users.map((user: any) => CryptoUtils.decryptUserData(user));
       }
+      
+      return {
+        products: data.products || [],
+        categories: data.categories || [],
+        sales: data.sales || [],
+        users: data.users || [],
+        lastSave: data.lastSave || new Date().toISOString()
+      };
     } catch (error) {
       console.error('Erreur lecture données:', error);
-    }
-
     // Retourner les données par défaut si vide
     return this.getDefaultData();
+    }
+
   }
 
   // Sauvegarder toutes les données
   saveData(data: StoredData): void {
     try {
-      data.lastSave = new Date().toISOString();
-      localStorage.setItem(this.storageKey, JSON.stringify(data));
+      const dataToSave = { ...data };
+      
+      // ✅ CHIFFRER les utilisateurs avant sauvegarde
+      if (dataToSave.users && Array.isArray(dataToSave.users)) {
+        dataToSave.users = dataToSave.users.map((user: any) => CryptoUtils.encryptUserData(user));
+      }
+      
+      dataToSave.lastSave = new Date().toISOString();
+      localStorage.setItem('salmichou-data', JSON.stringify(dataToSave));
     } catch (error) {
       console.error('Erreur sauvegarde données:', error);
     }

@@ -284,6 +284,12 @@ const handleUserSubmit = () => {
     }
     usersStore.updateUser(editingUser.value.id, updates);
   } else {
+        // Ajout - le mot de passe est requis
+    if (!userForm.password) {
+      showMessage('❌ Le mot de passe est requis pour un nouvel utilisateur', 'error');
+      return;
+    }
+
     // Ajout
     usersStore.addUser(userForm);
   }

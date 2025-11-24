@@ -2,6 +2,7 @@ import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { jsonStorage } from '../storage/jsonStorage';
 import type { User, Role, UserPermission } from '../types';
+import { CryptoUtils } from '../utils/crypto';
 
 export const useUsersStore = defineStore('users', () => {
   const users = ref<User[]>([]);
@@ -38,15 +39,22 @@ export const useUsersStore = defineStore('users', () => {
   // Initialisation
   const initializeUsers = () => {
     const data = jsonStorage.loadData();
-    users.value = data.users.map((user: any) => ({
-      ...user,
-      createdAt: new Date(user.createdAt),
-      updatedAt: new Date(user.updatedAt)
-    }));
+    
+    // ✅ DÉCHIFFRER les mots de passe au chargement
+    users.value = data.users.map((user: any) => {
+      const decryptedUser = CryptoUtils.decryptUserData(user);
+      return {
+        ...decryptedUser,
+        createdAt: new Date(user.createdAt),
+        updatedAt: new Date(user.updatedAt)
+      };
+    });
 
     const storedUser = localStorage.getItem('currentUser');
     if (storedUser) {
-      currentUser.value = JSON.parse(storedUser);
+      const userData = JSON.parse(storedUser);
+      // ✅ Déchiffrer aussi l'utilisateur courant
+      currentUser.value = CryptoUtils.decryptUserData(userData);
     }
   };
 
@@ -54,14 +62,17 @@ export const useUsersStore = defineStore('users', () => {
   const login = (username: string, password: string): boolean => {
     const user = users.value.find(u => 
       u.username === username && 
-      u.password === password && 
       u.isActive
     );
     
     if (user) {
-      currentUser.value = user;
-      localStorage.setItem('currentUser', JSON.stringify(user));
-      return true;
+      // ✅ DÉCHIFFRER pour la comparaison
+      const decryptedUser = CryptoUtils.decryptUserData(user);
+      if (decryptedUser.password === password) {
+        currentUser.value = decryptedUser;
+        localStorage.setItem('currentUser', JSON.stringify(decryptedUser));
+        return true;
+      }
     }
     return false;
   };
@@ -80,28 +91,39 @@ export const useUsersStore = defineStore('users', () => {
       updatedAt: new Date()
     };
     
-    users.value.push(newUser);
+    // ✅ CHIFFRER le mot de passe avant sauvegarde
+    const encryptedUser = CryptoUtils.encryptUserData(newUser);
+    users.value.push(encryptedUser);
     saveUsers();
-    return newUser;
+    return newUser; // Retourner l'utilisateur non chiffré pour l'UI
   };
 
   const updateUser = (id: string, updates: Partial<User>) => {
     const index = users.value.findIndex(u => u.id === id);
     if (index !== -1) {
-      users.value[index] = {
+      const updatedUser = {
         ...users.value[index],
         ...updates,
         updatedAt: new Date()
       };
       
+      // ✅ CHIFFRER le mot de passe si présent
+      if (updates.password) {
+        updatedUser.password = CryptoUtils.encrypt(updates.password);
+      }
+      
+      users.value[index] = updatedUser;
+      
       saveUsers();
 
       if (currentUser.value?.id === id) {
-        currentUser.value = users.value[index];
-        localStorage.setItem('currentUser', JSON.stringify(users.value[index]));
+        // ✅ Déchiffrer pour l'utilisateur courant
+        currentUser.value = CryptoUtils.decryptUserData(updatedUser);
+        localStorage.setItem('currentUser', JSON.stringify(currentUser.value));
       }
     }
   };
+
 
   const deleteUser = (id: string) => {
     if (currentUser.value?.id === id) {
