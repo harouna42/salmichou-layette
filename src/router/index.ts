@@ -46,6 +46,15 @@ const router = createRouter({
       meta: { requiresAuth: true, requiresPermission: 'view_users' }
     },
     {
+      path: '/configuration',
+      name: 'Configuration',
+      component: () => import('../views/Configuration.vue'),
+      meta: { 
+        requiresAuth: true, 
+        requiresPermission: 'manage_users' // Admin seulement
+      }
+    },
+    {
       path: '/',
       redirect: '/login'
     }

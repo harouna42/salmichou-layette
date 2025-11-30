@@ -1,18 +1,27 @@
+import { i18n } from '../i18n';
+
+
 /**
  * Formate un prix en FCFA avec séparateurs de milliers
  */
 export const formatPrice = (price: number): string => {
-  return new Intl.NumberFormat('fr-FR', {
+  const locale = i18n.global.locale.value === 'fr' ? 'fr-FR' : 'en-US';
+  return new Intl.NumberFormat(locale, {
     style: 'currency',
-    currency: 'XAF',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0
+    currency: 'XOF'
   }).format(price);
 };
+
 
 /**
  * Formate un nombre avec séparateurs de milliers
  */
-export const formatNumber = (number: number): string => {
-  return new Intl.NumberFormat('fr-FR').format(number);
+export const formatDate = (date: Date | string): string => {
+  const locale = i18n.global.locale.value === 'fr' ? 'fr-FR' : 'en-US';
+  return new Date(date).toLocaleDateString(locale);
+};
+
+export const formatDateTime = (date: Date | string): string => {
+  const locale = i18n.global.locale.value === 'fr' ? 'fr-FR' : 'en-US';
+  return new Date(date).toLocaleString(locale);
 };

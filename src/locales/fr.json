@@ -1,0 +1,98 @@
+{
+  "common": {
+    "save": "Sauvegarder",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "add": "Ajouter",
+    "search": "Rechercher",
+    "loading": "Chargement...",
+    "confirm": "Confirmer",
+    "back": "Retour"
+  },
+  "login": {
+    "title": "Salmichou Layette",
+    "username": "Nom d'utilisateur",
+    "password": "Mot de passe",
+    "login": "Se connecter",
+    "error": "Identifiants incorrects"
+  },
+  "navigation": {
+    "sales": "Gestion Ventes",
+    "salesHistory": "Historique Ventes",
+    "products": "Gestion Produits",
+    "categories": "Gestion Catégories",
+    "stats": "Statistiques",
+    "users": "Gestion Utilisateurs",
+    "config": "Configuration",
+    "configuration": "Configuration",
+    "logout": "Déconnexion",
+    "login": "Connexion"
+  },
+  "products": {
+    "title": "Gestion des Produits",
+    "addProduct": "Ajouter un produit",
+    "name": "Nom",
+    "description": "Description",
+    "price": "Prix de vente",
+    "costPrice": "Prix de revient",
+    "quantity": "Quantité",
+    "category": "Catégorie",
+    "size": "Taille",
+    "color": "Couleur",
+    "profit": "Marge",
+    "stock": "Stock",
+    "lowStock": "Stock faible",
+    "outOfStock": "Rupture de stock"
+  },
+  "sales": {
+    "title": "Gestion des Ventes",
+    "cart": "Panier en Cours",
+    "emptyCart": "Votre panier est vide",
+    "paymentMethod": "Méthode de paiement",
+    "customerName": "Nom du client",
+    "checkout": "Finaliser la vente",
+    "cash": "Espèces",
+    "card": "Carte",
+    "mobile": "Mobile Money"
+  },
+  "categories": {
+    "title": "Gestion des Catégories",
+    "addCategory": "Ajouter une catégorie",
+    "categoryName": "Nom de la catégorie",
+    "categoryDescription": "Description",
+    "productCount": "Nombre de produits"
+  },
+  "users": {
+    "title": "Gestion des Utilisateurs",
+    "addUser": "Ajouter un utilisateur",
+    "fullName": "Nom complet",
+    "email": "Email",
+    "phone": "Téléphone",
+    "role": "Rôle",
+    "status": "Statut",
+    "active": "Actif",
+    "inactive": "Inactif"
+  },
+  "config": {
+    "title": "Configuration",
+    "session": {
+      "title": "Paramètres de Session",
+      "duration": "Durée de session (minutes)",
+      "durationHelp": "Durée avant déconnexion automatique (1-24 heures)"
+    },
+    "backup": {
+      "title": "Paramètres de Sauvegarde",
+      "autoBackup": "Sauvegarde automatique",
+      "interval": "Intervalle de sauvegarde (minutes)",
+      "intervalHelp": "Fréquence des sauvegardes automatiques"
+    },
+    "interface": {
+      "title": "Interface Utilisateur",
+      "language": "Langue",
+      "theme": "Thème",
+      "light": "Clair",
+      "dark": "Sombre"
+    }
+  }
+}

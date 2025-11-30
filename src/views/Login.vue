@@ -1,22 +1,24 @@
 <template>
   <div class="login-container">
     <div class="login-form">
-      <h1>Salmichou Layette</h1>
+      <h1>{{ $t('login.title') }}</h1>
       <form @submit.prevent="handleLogin">
         <div class="form-group">
-          <label>Nom d'utilisateur:</label>
+          <label>{{ $t('login.username') }}:</label>
           <input v-model="username" type="text" required>
         </div>
         
         <div class="form-group">
-          <label>Mot de passe:</label>
+          <label>{{ $t('login.password') }}:</label>
           <input v-model="password" type="password" required>
         </div>
         
-        <button type="submit" class="btn-login">Se connecter</button>
+        <button type="submit" class="btn-login">
+          {{ $t('login.login') }}
+        </button>
         
         <div v-if="error" class="error-message">
-          {{ error }}
+          {{ $t('login.error') }}
         </div>        
       </form>
     </div>

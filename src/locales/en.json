@@ -1,0 +1,96 @@
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "search": "Search",
+    "loading": "Loading...",
+    "confirm": "Confirm",
+    "back": "Back"
+  },
+  "login": {
+    "title": "Salmichou Layette",
+    "username": "Username",
+    "password": "Password",
+    "login": "Login",
+    "error": "Invalid credentials"
+  },
+  "navigation": {
+    "sales": "Sales Management",
+    "salesHistory": "Sales History",
+    "products": "Products Management",
+    "categories": "Categories Management",
+    "stats": "Statistics",
+    "users": "Users Management",
+    "config": "Configuration",
+    "logout": "Logout"
+  },
+  "products": {
+    "title": "Products Management",
+    "addProduct": "Add product",
+    "name": "Name",
+    "description": "Description",
+    "price": "Sale price",
+    "costPrice": "Cost price",
+    "quantity": "Quantity",
+    "category": "Category",
+    "size": "Size",
+    "color": "Color",
+    "profit": "Margin",
+    "stock": "Stock",
+    "lowStock": "Low stock",
+    "outOfStock": "Out of stock"
+  },
+  "sales": {
+    "title": "Sales Management",
+    "cart": "Current Cart",
+    "emptyCart": "Your cart is empty",
+    "paymentMethod": "Payment method",
+    "customerName": "Customer name",
+    "checkout": "Checkout",
+    "cash": "Cash",
+    "card": "Card",
+    "mobile": "Mobile Money"
+  },
+  "categories": {
+    "title": "Categories Management",
+    "addCategory": "Add category",
+    "categoryName": "Category name",
+    "categoryDescription": "Description",
+    "productCount": "Products count"
+  },
+  "users": {
+    "title": "Users Management",
+    "addUser": "Add user",
+    "fullName": "Full name",
+    "email": "Email",
+    "phone": "Phone",
+    "role": "Role",
+    "status": "Status",
+    "active": "Active",
+    "inactive": "Inactive"
+  },
+  "config": {
+    "title": "Configuration",
+    "session": {
+      "title": "Session Settings",
+      "duration": "Session duration (hours)",
+      "durationHelp": "Duration before automatic logout (1-24 hours)"
+    },
+    "backup": {
+      "title": "Backup Settings",
+      "autoBackup": "Auto backup",
+      "interval": "Backup interval (minutes)",
+      "intervalHelp": "Automatic backup frequency"
+    },
+    "interface": {
+      "title": "User Interface",
+      "language": "Language",
+      "theme": "Theme",
+      "light": "Light",
+      "dark": "Dark"
+    }
+  }
+}

@@ -1,7 +1,7 @@
 <template>
   <nav class="navigation-verticale">
     <div class="logo">
-      <h2>Salmichou Layette</h2>
+      <h2>{{ $t('login.title') }}</h2>
       <div class="user-info" v-if="currentUser">
         <strong>{{ currentUser.name }}</strong>
         <span class="user-role">{{ getRoleLabel(currentUser.role) }}</span>
@@ -16,7 +16,7 @@
       <li v-if="currentUser">
         <router-link to="/ventes" class="menu-item">
           <span class="icon">🛒</span>
-          <span>Gestion Ventes</span>
+          <span>{{ $t('navigation.sales') }}</span>
         </router-link>
       </li>
       
@@ -24,7 +24,7 @@
       <li v-if="currentUser">
         <router-link to="/historique-ventes" class="menu-item">
           <span class="icon">📋</span>
-          <span>Historique Ventes</span>
+          <span>{{ $t('navigation.salesHistory') }}</span>
         </router-link>
       </li>
       
@@ -59,12 +59,18 @@
           <span>Gestion Catégories</span>
         </router-link>
       </li>
-
+      <!-- Dans NavigationVerticale.vue -->
+      <li v-if="currentUser && hasPermission('manage_users')">
+        <router-link to="/configuration" class="menu-item">
+          <span class="icon">⚙️</span>
+          <span>{{ $t('navigation.configuration') }}</span>
+        </router-link>
+      </li>
       <!-- Déconnexion - Seulement si connecté -->
       <li v-if="currentUser">
         <button @click="handleLogout" class="menu-item logout-btn">
           <span class="icon">🚪</span>
-          <span>Déconnexion</span>
+          <span>{{ $t('navigation.logout') }}</span>
         </button>
       </li>
       
@@ -72,7 +78,7 @@
       <li v-else>
         <router-link to="/login" class="menu-item">
           <span class="icon">🔐</span>
-          <span>Connexion</span>
+          <span>{{ $t('navigation.login') }}</span>
         </router-link>
       </li>
     </ul>

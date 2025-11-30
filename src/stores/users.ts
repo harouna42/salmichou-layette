@@ -3,6 +3,7 @@ import { ref, computed } from 'vue';
 import { jsonStorage } from '../storage/jsonStorage';
 import type { User, Role, UserPermission } from '../types';
 import { CryptoUtils } from '../utils/crypto';
+import { appConfig, defaultConfig } from '../config/appConfig';
 
 export const useUsersStore = defineStore('users', () => {
   const users = ref<User[]>([]);
@@ -36,6 +37,12 @@ export const useUsersStore = defineStore('users', () => {
   const isManager = computed(() => currentUser.value?.role === 'manager');
   const isEmployee = computed(() => currentUser.value?.role === 'employee');
 
+  // Remplacer la constante par un getter dynamique
+  const getSessionDuration = () => {
+    const config = appConfig.loadConfig();
+    return config.sessionDuration * 60 * 60 * 1000; // Convertir heures en ms
+  };
+
   // Initialisation
   const initializeUsers = () => {
     const data = jsonStorage.loadData();
@@ -51,11 +58,25 @@ export const useUsersStore = defineStore('users', () => {
     });
 
     const storedUser = localStorage.getItem('currentUser');
-    if (storedUser) {
-      const userData = JSON.parse(storedUser);
-      // ✅ Déchiffrer aussi l'utilisateur courant
-      currentUser.value = CryptoUtils.decryptUserData(userData);
-    }
+    const sessionExpiry = localStorage.getItem('sessionExpiry');
+
+    if (storedUser && sessionExpiry) {
+        const now = new Date().getTime();
+        const expiryTime = parseInt(sessionExpiry);
+        
+        if (now < expiryTime) {
+          currentUser.value = JSON.parse(storedUser);
+          console.log('✅ Session restaurée');
+        } else {
+          console.log('🔴 Session expirée');
+          currentUser.value = null;
+          localStorage.removeItem('currentUser');
+          localStorage.removeItem('sessionExpiry');
+        }
+      } else {
+        currentUser.value = null;
+      }
+
   };
 
   // Authentification
@@ -71,9 +92,16 @@ export const useUsersStore = defineStore('users', () => {
       if (decryptedUser.password === password) {
         currentUser.value = decryptedUser;
         localStorage.setItem('currentUser', JSON.stringify(decryptedUser));
+        const sessionDuration = getSessionDuration();
+        const expiryTime = new Date().getTime() + sessionDuration;
+        localStorage.setItem('sessionExpiry', expiryTime.toString());
+    
+        console.log(`✅ Connexion réussie - Session valide ${appConfig.loadConfig().sessionDuration}h`);
+
         return true;
       }
     }
+    console.log('🔴 Échec connexion');
     return false;
   };
 
