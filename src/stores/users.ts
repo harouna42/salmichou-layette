@@ -4,6 +4,7 @@ import { jsonStorage } from '../storage/jsonStorage';
 import type { User, Role, UserPermission } from '../types';
 import { CryptoUtils } from '../utils/crypto';
 import { appConfig, defaultConfig } from '../config/appConfig';
+import { setLanguage } from '../i18n';
 
 export const useUsersStore = defineStore('users', () => {
   const users = ref<User[]>([]);
@@ -46,7 +47,10 @@ export const useUsersStore = defineStore('users', () => {
   // Initialisation
   const initializeUsers = () => {
     const data = jsonStorage.loadData();
-    
+   
+    const config = appConfig.loadConfig();
+    setLanguage(config.language);
+
     // ✅ DÉCHIFFRER les mots de passe au chargement
     users.value = data.users.map((user: any) => {
       const decryptedUser = CryptoUtils.decryptUserData(user);
@@ -76,7 +80,6 @@ export const useUsersStore = defineStore('users', () => {
       } else {
         currentUser.value = null;
       }
-
   };
 
   // Authentification
