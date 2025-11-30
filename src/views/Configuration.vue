@@ -118,10 +118,13 @@
 </template>
 
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n';
 import { ref, reactive, computed, onMounted } from 'vue';
 import { appConfig, defaultConfig, type AppConfig } from '../config/appConfig';
+import { setLanguage } from '../i18n';
 
 const fileInput = ref<HTMLInputElement>();
+const { t } = useI18n();
 const message = ref('');
 const messageType = ref<'success' | 'error'>('success');
 
@@ -137,9 +140,14 @@ onMounted(() => {
   Object.assign(config, savedConfig);
 });
 
+const changeLanguage = () => {
+  setLanguage(config.language);
+};
+
 // Méthodes
 const saveConfig = () => {
   appConfig.saveConfig(config);
+  setLanguage(config.language); 
   showMessage('✅ Configuration sauvegardée avec succès', 'success');
   
   // Recharger la session si durée modifiée
@@ -198,6 +206,7 @@ const resetConfig = () => {
   if (confirm('Réinitialiser la configuration aux valeurs par défaut ?')) {
     Object.assign(config, defaultConfig);
     appConfig.saveConfig(defaultConfig);
+    setLanguage(defaultConfig.language);
     showMessage('✅ Configuration réinitialisée', 'success');
   }
 };

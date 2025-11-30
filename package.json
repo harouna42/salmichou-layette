@@ -4,6 +4,7 @@
    "description": "Application de gestion de boutique de layette",
    "main": "electron/main.cjs",
    "type": "module",
+   "author": "Salamatou",
    "scripts": {
       "dev": "vite",
       "build": "vite build",
@@ -34,7 +35,7 @@
    "build": {
       "appId": "com.salmichou.layette",
       "productName": "SalmichouLayette",
-      "asar": false,
+      "asar": true,
       "directories": {
          "output": "release"
       },

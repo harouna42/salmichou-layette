@@ -63,7 +63,7 @@
       <li v-if="currentUser && hasPermission('manage_users')">
         <router-link to="/configuration" class="menu-item">
           <span class="icon">⚙️</span>
-          <span>{{ $t('navigation.configuration') }}</span>
+          <span>{{ $t('navigation.config') }}</span>
         </router-link>
       </li>
       <!-- Déconnexion - Seulement si connecté -->
